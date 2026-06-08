@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='utf-8'?>
+<kaspi_catalog date="2026-06-08 17:16:15" xmlns="kaspiShopping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="kaspiShopping http://kaspi.kz/kaspishopping.xsd">
+    <company>My Kaspi Store</company>
+    <merchantid>1234567</merchantid>
+    <offers>
+        <offer sku="1001">
+            <model>Iphone 13 128gb Black</model>
+            <brand>Apple</brand>
+            <availabilities>
+                <availability available="yes" storeId="PP1" preOrder="0" stockCount="10" />
+            </availabilities>
+            <cityprices>
+                <cityprice cityId="710000000">349989</cityprice>
+            </cityprices>
+        </offer>
+    </offers>
+</kaspi_catalog>
