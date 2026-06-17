@@ -4,15 +4,15 @@ import sqlite3
 from datetime import datetime
 
 # Ботты іске қосу
-bot = telebot.TeleBot("8842420506:AAGna3AKlIXS6X-jmgIvqGFaKR_2VmzQcos")
+bot = telebot.TeleBot('8618325710:AAFNWTU5sx7s95-jkopleLorLyPz4Z3IMzk')
 
 # Дерекқорды дайындау
 conn = sqlite3.connect('sales.db', check_same_thread=False)
 cursor = conn.cursor()
-cursor.execute('''CREATE TABLE IF NOT EXISTS sales (id INTEGER PRIMARY KEY, profit REAL, date TEXT)''')
+cursor.execute("CREATE TABLE IF NOT EXISTS sales (id INTEGER PRIMARY KEY, profit REAL, date TEXT)")
 conn.commit()
 
-# 1. Kaspi жеткізу құнын анықтау (Кесте бойынша)
+# 1. Kaspi жеткізу құнын анықтау
 def get_kaspi_delivery(price):
     if price < 1000: return 57
     if 1000 <= price < 3000: return 173
@@ -27,47 +27,50 @@ def handle_kaspi(message):
     try:
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
-            page = browser.new_page()
+            context = browser.new_context(
+                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
+            )
+            page = context.new_page()
             page.goto(message.text)
-            page.wait_for_selector('.item__price-once', timeout=15000)
+            
+            # Бағаны күту (timeout 20 секунд)
+            page.wait_for_selector('.item__price-once', timeout=20000)
             
             raw_price = page.locator('.item__price-once').first.inner_text()
-            price = float(''.join(filter(str.isdigit, raw_price)))
+            price = float("".join(filter(str.isdigit, raw_price)))
             browser.close()
             
             delivery = get_kaspi_delivery(price)
-            
-            msg = bot.reply_to(message, f"💰 Kaspi бағасы: {price:,.0f} ₸\n🚚 Kaspi жеткізуі: {delivery} ₸\nСебестоимостьты жаз (Қытай бағасы + Қытай жеткізуі):")
+            msg = bot.reply_to(message, f"💰 Kaspi бағасы: {price:,} ₸\n🚚 Kaspi жеткізуі: {delivery} ₸\n\nСебепқұндылықты жаз (Қытай бағасы + Қытай жеткізуі):")
             bot.register_next_step_handler(msg, process_profit, price, delivery)
+            
     except Exception as e:
-        bot.reply_to(message, f"❌ Қате: Бағаны таба алмадым.")
+        print(f"Қате орын алды: {e}")
+        bot.reply_to(message, "❌ Қате: Бағаны таба алмадым. Сайт құрылымы өзгерген болуы мүмкін.")
 
 # 3. Барлық шығынды есептеу
 def process_profit(message, kaspi_price, kaspi_delivery):
     try:
-        total_cost = float(''.join(filter(str.isdigit, message.text)))
-        
+        total_cost = float("".join(filter(str.isdigit, message.text)))
         commission = kaspi_price * 0.125
         tax = kaspi_price * 0.03
         
-        # Барлық шығын қосындысы
         total_expense = total_cost + commission + tax + kaspi_delivery
         profit = kaspi_price - total_expense
         
-        cursor.execute("INSERT INTO sales (profit, date) VALUES (?, ?)", 
-                       (profit, datetime.now().strftime("%Y-%m-%d")))
+        cursor.execute("INSERT INTO sales (profit, date) VALUES (?, ?)", (profit, datetime.now().strftime("%Y-%m-%d")))
         conn.commit()
         
         response = (
-            f"💰 **Kaspi бағасы:** {kaspi_price:,.0f} ₸\n"
-            f"➖➖➖➖➖➖➖➖\n"
+            f"💰 **Kaspi бағасы:** {kaspi_price:,} ₸\n"
+            f"――――――――――\n"
             f"📦 **Шығындар:**\n"
-            f"— 🏷 Себестоимость: {total_cost:,.0f} ₸\n"
+            f"— 🏷 Себепқұндылық: {total_cost:,} ₸\n"
             f"— 💼 Комиссия (12.5%): {commission:,.0f} ₸\n"
-            f"— 🏦 Салық (3%): {tax:,.0f} ₸\n"
+            f"— 🏛 Салық (3%): {tax:,.0f} ₸\n"
             f"— 🚚 Kaspi жеткізуі: {kaspi_delivery} ₸\n"
-            f"➖➖➖➖➖➖➖➖\n"
-            f"✅ **Таза пайда:** {profit:,.0f} ₸\n"
+            f"――――――――――\n"
+            f"✅ **Таза пайда:** {profit:,.0f} ₸"
         )
         bot.reply_to(message, response)
     except:
@@ -75,5 +78,5 @@ def process_profit(message, kaspi_price, kaspi_delivery):
 
 # 4. Ботты іске қосу
 if __name__ == '__main__':
-    print("✅ Бот сәтті іске қосылды! Telegram-ға өтіп, сілтеме жібер.")
+    print("✅ Бот сәтті іске қосылды!")
     bot.infinity_polling()
