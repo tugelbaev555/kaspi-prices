@@ -4,7 +4,7 @@ import sqlite3
 from datetime import datetime
 
 # Ботты іске қосу
-bot = telebot.TeleBot("8618325710:AAFNWTU5sx7s95-jkopIeLorLyPz4Z3IMzk")
+bot = telebot.TeleBot("8842420506:AAGna3AKlIXS6X-jmgIvqGFaKR_2VmzQcos")
 
 # Дерекқорды дайындау
 conn = sqlite3.connect('sales.db', check_same_thread=False)
